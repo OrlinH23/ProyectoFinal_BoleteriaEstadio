@@ -5,6 +5,9 @@ import java.time.LocalDate;
 
 public class ProyectoFinal_BoleteriaEstadio {
 
+    
+    
+    //HOLA ESTA ES MI PRIMERA PRUEBA
     private static Scanner entrada = new Scanner(System.in);
 
     // ----------------------
