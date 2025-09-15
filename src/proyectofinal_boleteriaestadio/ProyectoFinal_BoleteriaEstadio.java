@@ -5,9 +5,6 @@ import java.time.LocalDate;
 
 public class ProyectoFinal_BoleteriaEstadio {
 
-    
-    
-    //HOLA ESTA ES MI PRIMERA PRUEBA
     private static Scanner entrada = new Scanner(System.in);
 
     // ----------------------
@@ -31,6 +28,9 @@ public class ProyectoFinal_BoleteriaEstadio {
     // ARREGLOS PARA BOLETOS POR PARTIDO
     // ----------------------
     private static String[][] codigosBoletosVendidos = new String[10][];
+    private static int[][] edadesBoletos = new int[10][];
+    private static double[][] preciosBoletos = new double[10][];
+
     private static int[] contadorBoletosSombra = new int[10];
     private static int[] contadorBoletosSol = new int[10];
     private static int[] contadorBoletosPalco = new int[10];
@@ -45,7 +45,8 @@ public class ProyectoFinal_BoleteriaEstadio {
             System.out.println("\n--- MENU PRINCIPAL DE BOLETERIA ---");
             System.out.println("1. Administrador");
             System.out.println("2. Vender boletos");
-            System.out.println("3. Salir del sistema");
+            System.out.println("3. Estadisticas en tiempo real");
+            System.out.println("4. Salir del sistema");
             System.out.print("Ingrese el numero de su opcion: ");
 
             opcionPrincipal = entrada.nextInt();
@@ -59,13 +60,16 @@ public class ProyectoFinal_BoleteriaEstadio {
                     venderBoletos();
                     break;
                 case 3:
+                    reporteAsistenciaPorSectorYTipo();
+                    break;
+                case 4:
                     System.out.println("Saliendo del sistema...");
                     break;
                 default:
                     System.out.println("Opcion no valida. Intente de nuevo.");
                     break;
             }
-        } while (opcionPrincipal != 3);
+        } while (opcionPrincipal != 4);
     }
 
     // ----------------------
@@ -113,7 +117,7 @@ public class ProyectoFinal_BoleteriaEstadio {
             return;
         }
 
-        System.out.println("\n**** Nuevo Partido ****");
+        System.out.println("\n** Nuevo Partido **");
 
         // Validar codigo unico
         do {
@@ -145,7 +149,7 @@ public class ProyectoFinal_BoleteriaEstadio {
         dia = entrada.nextInt();
         System.out.print("Ingrese el mes del partido (1-12): ");
         mes = entrada.nextInt();
-        System.out.print("Ingrese el año del partido (AAAA): ");
+        System.out.print("Ingrese el anio del partido (AAAA): ");
         anio = entrada.nextInt();
         entrada.nextLine();
         fechas[contadorPartidos] = dia * 1000000 + mes * 10000 + anio;
@@ -177,6 +181,8 @@ public class ProyectoFinal_BoleteriaEstadio {
                              capacidadesSol[contadorPartidos] +
                              capacidadesPalco[contadorPartidos];
         codigosBoletosVendidos[contadorPartidos] = new String[capacidadTotal];
+        edadesBoletos[contadorPartidos] = new int[capacidadTotal];
+        preciosBoletos[contadorPartidos] = new double[capacidadTotal];
 
         contadorPartidos++;
         System.out.println("Partido agregado correctamente.");
@@ -200,21 +206,20 @@ public class ProyectoFinal_BoleteriaEstadio {
             anio = fechas[i] % 10000;
 
             System.out.println("Codigo: " + codigosPartidos[i] +
-                    " | Descripcion: " + descripciones[i] +
-                    " | Fecha: " + dia + "/" + mes + "/" + anio +
-                    " | Sombra: " + capacidadesSombra[i] + " disponibles - Precio: " + preciosSombra[i] +
-                    " | Sol: " + capacidadesSol[i] + " disponibles - Precio: " + preciosSol[i] +
-                    " | Palco: " + capacidadesPalco[i] + " disponibles - Precio: " + preciosPalco[i]);
+                               " | Descripcion: " + descripciones[i] +
+                               " | Fecha: " + dia + "/" + mes + "/" + anio +
+                               " | Sombra: " + capacidadesSombra[i] + " disponibles - Precio: " + preciosSombra[i] +
+                               " | Sol: " + capacidadesSol[i] + " disponibles - Precio: " + preciosSol[i] +
+                               " | Palco: " + capacidadesPalco[i] + " disponibles - Precio: " + preciosPalco[i]);
         }
     }
 
     // ----------------------
-    // FUNCION: VENDER BOLETOS
+    // FUNCION: VENDER BOLETOS (CORREGIDA)
     // ----------------------
     public static void venderBoletos() {
-        int codigoPartido, i, opcionSector, cantidad, edad, dia, mes, anio, contadorSector = 0;
+        int codigoPartido, i, opcionSector, cantidad, edad, dia, mes, anio;
         String sector = "";
-        int capacidadDisponible = 0;
         double precioBase = 0, precioFinal;
         LocalDate hoy;
         LocalDate fechaPartido;
@@ -251,31 +256,6 @@ public class ProyectoFinal_BoleteriaEstadio {
         opcionSector = entrada.nextInt();
         entrada.nextLine();
 
-        switch (opcionSector) {
-            case 1:
-                sector = "Sombra";
-                capacidadDisponible = capacidadesSombra[i];
-                precioBase = preciosSombra[i];
-                contadorSector = contadorBoletosSombra[i];
-                break;
-            case 2:
-                sector = "Sol";
-                capacidadDisponible = capacidadesSol[i];
-                precioBase = preciosSol[i];
-                contadorSector = contadorBoletosSol[i];
-                break;
-            case 3:
-                sector = "Palco";
-                capacidadDisponible = capacidadesPalco[i];
-                precioBase = preciosPalco[i];
-                contadorSector = contadorBoletosPalco[i];
-                break;
-            default:
-                System.out.println("Sector no valido.");
-                return;
-        }
-
-        // Cantidad de boletos
         System.out.print("Ingrese cantidad de boletos (maximo 5): ");
         cantidad = entrada.nextInt();
         entrada.nextLine();
@@ -285,17 +265,44 @@ public class ProyectoFinal_BoleteriaEstadio {
             return;
         }
 
-        if (cantidad > capacidadDisponible) {
-            System.out.println("No hay suficientes boletos disponibles en este sector.");
-            return;
+        int baseIndex = 0;
+        int currentCounter;
+
+        switch (opcionSector) {
+            case 1:
+                if (cantidad > capacidadesSombra[i]) {
+                    System.out.println("No hay suficientes boletos disponibles en este sector.");
+                    return;
+                }
+                sector = "Sombra";
+                precioBase = preciosSombra[i];
+                currentCounter = contadorBoletosSombra[i];
+                break;
+            case 2:
+                if (cantidad > capacidadesSol[i]) {
+                    System.out.println("No hay suficientes boletos disponibles en este sector.");
+                    return;
+                }
+                sector = "Sol";
+                precioBase = preciosSol[i];
+                baseIndex = contadorBoletosSombra[i];
+                currentCounter = contadorBoletosSol[i];
+                break;
+            case 3:
+                if (cantidad > capacidadesPalco[i]) {
+                    System.out.println("No hay suficientes boletos disponibles en este sector.");
+                    return;
+                }
+                sector = "Palco";
+                precioBase = preciosPalco[i];
+                baseIndex = contadorBoletosSombra[i] + contadorBoletosSol[i];
+                currentCounter = contadorBoletosPalco[i];
+                break;
+            default:
+                System.out.println("Sector no valido.");
+                return;
         }
 
-        // Edad del comprador principal
-        System.out.print("Ingrese edad del comprador principal: ");
-        edad = entrada.nextInt();
-        entrada.nextLine();
-
-        // Fecha actual y preventa
         hoy = LocalDate.now();
         int fechaInt = fechas[i];
         dia = fechaInt / 1000000;
@@ -305,44 +312,123 @@ public class ProyectoFinal_BoleteriaEstadio {
 
         boolean preventa = hoy.isEqual(fechaPartido.minusDays(1));
 
-        // Generar boletos secuenciales y mostrar
         System.out.println("\n--- Boletos Comprados ---");
         for (int j = 0; j < cantidad; j++) {
-            int numeroBoleto = contadorSector + 1;
+            int numeroBoleto = currentCounter + 1;
             String codigoBoleto = codigoPartido + "-" + sector.charAt(0) + "-" + numeroBoleto;
 
-            // Aplicar descuento solo al comprador principal (primer boleto)
-            if (j == 0 && edad >= 65) {
+            System.out.print("Ingrese edad del comprador para el boleto " + (j + 1) + ": ");
+            edad = entrada.nextInt();
+            entrada.nextLine();
+
+            if (edad >= 65) {
                 precioFinal = precioBase * 0.65;
-            } else if (j == 0 && preventa) {
+            } else if (preventa) {
                 precioFinal = precioBase * 0.75;
             } else {
                 precioFinal = precioBase;
             }
 
-            codigosBoletosVendidos[i][contadorSector] = codigoBoleto;
-            contadorSector++;
+            codigosBoletosVendidos[i][baseIndex + currentCounter] = codigoBoleto;
+            edadesBoletos[i][baseIndex + currentCounter] = edad;
+            preciosBoletos[i][baseIndex + currentCounter] = precioFinal;
 
+            currentCounter++;
             System.out.printf("Boleto %d: %s | Precio: %.2f\n", j + 1, codigoBoleto, precioFinal);
         }
 
-        // Actualizar capacidad y contadores
         switch (opcionSector) {
             case 1:
                 capacidadesSombra[i] -= cantidad;
-                contadorBoletosSombra[i] = contadorSector;
+                contadorBoletosSombra[i] = currentCounter;
                 break;
             case 2:
                 capacidadesSol[i] -= cantidad;
-                contadorBoletosSol[i] = contadorSector;
+                contadorBoletosSol[i] = currentCounter;
                 break;
             case 3:
                 capacidadesPalco[i] -= cantidad;
-                contadorBoletosPalco[i] = contadorSector;
+                contadorBoletosPalco[i] = currentCounter;
                 break;
         }
 
         System.out.println("Venta completada.\n");
     }
 
-}//fin de class principal
+    // ----------------------
+    // REPORTE ESTADISTICAS EN TIEMPO REAL (CORREGIDO)
+    // ----------------------
+    public static void reporteAsistenciaPorSectorYTipo() {
+        if (contadorPartidos == 0) {
+            System.out.println("No hay partidos registrados.");
+            return;
+        }
+
+        System.out.println("\n--- ESTADISTICAS EN TIEMPO REAL ---");
+        for (int i = 0; i < contadorPartidos; i++) {
+            System.out.println("\nPartido: " + descripciones[i]);
+
+            int sombraNinos = 0, sombraAdultos = 0, sombraMayores = 0;
+            int solNinos = 0, solAdultos = 0, solMayores = 0;
+            int palcoNinos = 0, palcoAdultos = 0, palcoMayores = 0;
+
+            double ingresoTotal = 0;
+
+            // Procesar boletos de Sombra
+            for (int j = 0; j < contadorBoletosSombra[i]; j++) {
+                int edad = edadesBoletos[i][j];
+                ingresoTotal += preciosBoletos[i][j];
+                if (edad <= 12) sombraNinos++;
+                else if (edad < 65) sombraAdultos++;
+                else sombraMayores++;
+            }
+            
+            // Procesar boletos de Sol
+            int solStartIndex = contadorBoletosSombra[i];
+            for (int j = 0; j < contadorBoletosSol[i]; j++) {
+                int edad = edadesBoletos[i][solStartIndex + j];
+                ingresoTotal += preciosBoletos[i][solStartIndex + j];
+                if (edad <= 12) solNinos++;
+                else if (edad < 65) solAdultos++;
+                else solMayores++;
+            }
+            
+            // Procesar boletos de Palco
+            int palcoStartIndex = contadorBoletosSombra[i] + contadorBoletosSol[i];
+            for (int j = 0; j < contadorBoletosPalco[i]; j++) {
+                int edad = edadesBoletos[i][palcoStartIndex + j];
+                ingresoTotal += preciosBoletos[i][palcoStartIndex + j];
+                if (edad <= 12) palcoNinos++;
+                else if (edad < 65) palcoAdultos++;
+                else palcoMayores++;
+            }
+
+            System.out.println("Sector Sombra -> Ninios: " + sombraNinos + ", Adultos: " + sombraAdultos + ", 3ra Edad: " + sombraMayores);
+            System.out.println("Sector Sol -> Ninios: " + solNinos + ", Adultos: " + solAdultos + ", 3ra Edad: " + solMayores);
+            System.out.println("Sector Palco -> Ninios: " + palcoNinos + ", Adultos: " + palcoAdultos + ", 3ra Edad: " + palcoMayores);
+
+            int totalNinos = sombraNinos + solNinos + palcoNinos;
+            int totalAdultos = sombraAdultos + solAdultos + palcoAdultos;
+            int totalMayores = sombraMayores + solMayores + palcoMayores;
+            int totalGeneral = totalNinos + totalAdultos + totalMayores;
+
+            System.out.println("\n>>> Totales del partido:");
+            System.out.println("Ninios: " + totalNinos + " | Adultos: " + totalAdultos + " | 3ra Edad: " + totalMayores);
+            System.out.println("TOTAL GENERAL: " + totalGeneral);
+            System.out.printf("INGRESO TOTAL RECAUDADO: L. %.2f\n", ingresoTotal);
+
+            if (totalGeneral > 0) {
+                double pctNinos = (totalNinos * 100.0) / totalGeneral;
+                double pctAdultos = (totalAdultos * 100.0) / totalGeneral;
+                double pctMayores = (totalMayores * 100.0) / totalGeneral;
+
+                System.out.println("\n>>> Porcentajes de asistencia:");
+                System.out.printf("Ninios: %.2f%%\n", pctNinos);
+                System.out.printf("Adultos: %.2f%%\n", pctAdultos);
+                System.out.printf("3ra Edad: %.2f%%\n", pctMayores);
+            } else {
+                System.out.println("\nNo hay asistencia registrada para este partido.");
+            }
+        }
+    }
+}//fin de class
